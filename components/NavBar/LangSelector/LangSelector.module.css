@@ -1,0 +1,9 @@
+.flagIcon{
+    background-size: contain;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    position: relative;
+    display: inline-block;
+    width: 1.em;
+    line-height: 1em;
+    }

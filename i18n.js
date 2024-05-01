@@ -1,0 +1,57 @@
+import { headers } from 'next/headers'
+import { notFound } from 'next/navigation'
+import { getRequestConfig } from 'next-intl/server'
+import { locales } from './navigation'
+
+export default getRequestConfig(async ({ locale }) => {
+
+    if (!locales.includes(locale)) notFound()
+
+    const now = headers().get('x-now')
+    const timeZone = headers().get('x-time-zone') ?? 'Europe/Vienna'
+    const localeMessages = {
+        Navigation: { ...(await import(`/messages/${locale}/Navigation.json`)).default },
+        Languajes: { ...(await import(`/messages/${locale}/Languajes.json`)).default },
+        Index: { ...(await import(`/messages/${locale}/Home.json`)).default },
+        Projects: { ...(await import(`/messages/${locale}/Projects.json`)).default }
+
+    }
+    const messages = { ...localeMessages }
+
+    return {
+        now: now ? new Date(now) : undefined,
+        timeZone,
+        messages,
+        defaultTranslationValues: {
+            globalString: 'Global string',
+            highlight: (chunks) => <strong>{chunks}</strong>
+        },
+        formats: {
+            dateTime: {
+                medium: {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                    hour12: false
+                }
+            }
+        },
+        onError(error) {
+            if (
+                error.message ===
+                (process.env.NODE_ENV === 'production'
+                    ? 'MISSING_MESSAGE'
+                    : 'MISSING_MESSAGE: Could not resolve `missing` in `Index`.')
+            ) {
+                // Do nothing, this error is triggered on purpose
+            } else {
+                console.error(JSON.stringify(error.message))
+            }
+        },
+        getMessageFallback({ key, namespace }) {
+            return (
+                '`getMessageFallback` called for ' +
+                [namespace, key].filter((part) => part != null).join('.')
+            )
+        }
+    }
+})
